@@ -9,11 +9,16 @@ open_listenfd(int port)
 
 	int listenfd, flags=1;
 	struct sockaddr_in serveraddr;
+    struct linger ling = {0,0};
 
 	if((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -1;
-	if (setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&flags , sizeof(int)) < 0) return -1;
+	if(setsockopt(listenfd, SOL_SOCKET, SO_LINGER, (const void *)&ling, sizeof(ling)) < 0) return -1;
+    if(setsockopt(listenfd, SOL_SOCKET, SO_KEEPALIVE, (const void *)&flags, sizeof(int)) < 0) return -1;
+	if(setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&flags , sizeof(int)) < 0) return -1;
 
 	bzero((char *) &serveraddr, sizeof(serveraddr));
+	//socklen_t len = sizeof(serveraddr);
+	//memset(&serveraddr, 0, sizeof(serveraddr));
 	serveraddr.sin_family = AF_INET;
 	serveraddr.sin_addr.s_addr = htonl(INADDR_ANY);
 	serveraddr.sin_port = htons((unsigned short)port);

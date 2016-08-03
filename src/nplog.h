@@ -22,8 +22,10 @@
 #define UNUSED(x) ( (void)(x) )
 #define SERVER_PORT 66899
 #define CONF_FILE "log.conf"
-#define LOG_DATA_SIZE 1 << 22 // 4*1024*1024
-#define LOG_KEY_SIZE  1 << 8  // 256
+#define LOG_DATA_SIZE  1 << 21  // 2*1024*1024
+#define LOG_KEY_SIZE   1 << 8   // 256
+#define HASH_SZIE      64 << 22 // 256*1024*1024
+#define HASH_SIZE_STEP 1 << 22  // 4*1024*1024
 
 static int sockfd = -1;
 
@@ -66,7 +68,7 @@ typedef struct {
     log_opt *opt;
 } log_server;
 
-int  log_init(log_item *item);
+int  log_init(log_server *server, int sockfd, int epfd);
 int  log_add(LOG_LEVEL level, char *key_name, char *data); //add && update
 int  log_get(unsigned long key);
 int  log_delete(unsigned long key);

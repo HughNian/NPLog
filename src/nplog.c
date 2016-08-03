@@ -22,9 +22,16 @@ parse_cmd()
 }
 
 int
-log_init(log_item *item)
+log_init(log_server *server, int sockfd, int epfd)
 {
+    server->sfd = sockfd;
+    server->epoll_fd = epfd;
+    //server->opt = opt;
 
+    int storage_ret = storage_startup();
+    if(storage_ret < 0) return RETURN_ERROR;
+
+    return RETURN_OK;
 }
 
 int
@@ -102,10 +109,11 @@ main(int argc, char **argv)
 
 	sockfd = open_listenfd(port);
 	make_socket_non_blocking(sockfd);
-
-	log_server
-
 	epfd = np_epoll_create(flags);
 
-
+	log_server *server = (log_server *)malloc(sizeof(log_server));
+	if(server == NULL){
+		fprintf(stderr, "log server failed!");
+	}
+    log_init(server, sockfd, epfd);
 }
