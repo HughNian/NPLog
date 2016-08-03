@@ -7,7 +7,7 @@
 #define CONF_ERROR   1000
 
 #define LISTENQ 1 << 10 //1024
-#define BUFLEN  1 << 11 //2048
+#define BUFLEN  8124
 
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 

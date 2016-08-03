@@ -13,8 +13,8 @@ open_listenfd(int port)
 
 	if((listenfd = socket(AF_INET, SOCK_STREAM, 0)) < 0) return -1;
 	if(setsockopt(listenfd, SOL_SOCKET, SO_LINGER, (const void *)&ling, sizeof(ling)) < 0) return -1;
-    if(setsockopt(listenfd, SOL_SOCKET, SO_KEEPALIVE, (const void *)&flags, sizeof(int)) < 0) return -1;
 	if(setsockopt(listenfd, SOL_SOCKET, SO_REUSEADDR, (const void *)&flags , sizeof(int)) < 0) return -1;
+	//if(setsockopt(listenfd, SOL_SOCKET, SO_KEEPALIVE, (const void *)&flags, sizeof(int)) < 0) return -1;
 
 	bzero((char *) &serveraddr, sizeof(serveraddr));
 	//socklen_t len = sizeof(serveraddr);

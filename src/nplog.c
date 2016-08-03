@@ -16,6 +16,12 @@ show_hlep()
 }
 
 int
+server_do()
+{
+
+}
+
+int
 parse_cmd()
 {
 
@@ -24,12 +30,13 @@ parse_cmd()
 int
 log_init(log_server *server, int sockfd, int epfd)
 {
-    server->sfd = sockfd;
+    server->sock_fd  = sockfd;
     server->epoll_fd = epfd;
-    //server->opt = opt;
 
-    int storage_ret = storage_startup();
-    if(storage_ret < 0) return RETURN_ERROR;
+    if(!storage_ret){
+    	storage_ret = storage_startup();
+    	if(!storage_ret) return RETURN_ERROR;
+    }
 
     return RETURN_OK;
 }
@@ -53,7 +60,7 @@ get_level(unsigned long key)
 }
 
 void
-server_exit(int sig)
+server_exit(log_server *server)
 {
 
 }
@@ -61,7 +68,7 @@ server_exit(int sig)
 int
 main(int argc, char **argv)
 {
-	int uid, gid, c, port, todaemon = 0, flags = 0;
+	int uid, gid, c, port, n, i =0, todaemon = 0, flags = 0;
 	while(-1 != (c = getopt(argc, argv, "p:u:g:s:Dhvn:l:kb:f:i:"))) {
 		switch (c) {
 			case 'u':
@@ -90,6 +97,7 @@ main(int argc, char **argv)
 			case 'h':
 				show_hlep();
 				break;
+		}
 	}
 
 
@@ -105,7 +113,10 @@ main(int argc, char **argv)
 
 	int epfd;
 	struct epoll_struct ev;
-    struct sockaddr_in serveraddr, clientaddr;
+	int sockfd, clientfd;
+    struct sockaddr_in clientaddr;
+    bzero((char *)&clientaddr, sizeof(clientaddr));
+    socklen_t clientlen = sizeof(clientaddr);
 
 	sockfd = open_listenfd(port);
 	make_socket_non_blocking(sockfd);
@@ -115,5 +126,58 @@ main(int argc, char **argv)
 	if(server == NULL){
 		fprintf(stderr, "log server failed!");
 	}
-    log_init(server, sockfd, epfd);
+
+	log_init(server, sockfd, epfd);
+
+	ev.data.ptr = (log_server *)server;
+	ev.events = EPOLLIN | EPOLLET;
+	np_epoll_add(epfd, sockfd, &ev);
+
+	int fd;
+	for(;;){
+		n = np_epoll_wait(epfd, events, MAXEVENTS, 0);
+		for(; i < n; i++){
+			log_server *s = (log_server *)events[i].data.ptr;
+			fd = s->sock_fd;
+
+			if(sockfd == fd){
+				while(1){
+					clientfd = accept(sockfd, (struct sockaddr *)&clientaddr, &clientlen);
+					if(clientfd < 0){
+						if ((errno == EAGAIN) || (errno == EWOULDBLOCK)) {
+							break;
+						} else {
+							fprinf(stderr, "accept error");
+							break;
+						}
+					}
+
+					make_socket_non_blocking(clientfd);
+
+					log_server *server = (log_server *)malloc(sizeof(log_server));
+					if(server == NULL){
+						fprintf(stderr, "log server failed!2");
+						break;
+					}
+
+					log_init(server, clientfd, epfd);
+					ev.data.ptr = (log_server *)server;
+					ev.events   = EPOLLIN | EPOLLET | EPOLLONESHOT;
+					np_epoll_add(epfd, clientfd, &ev);
+				}
+			} else {
+				if ((events[i].events & EPOLLERR) ||
+				    (events[i].events & EPOLLHUP) ||
+				    (!(events[i].events & EPOLLIN))) {
+						fprintf(stderr, "epoll error fd");
+				        close(fd);
+				        continue;
+				}
+
+				server_do(events[i].data.ptr);
+			}
+		}
+	}
+
+	return 0;
 }

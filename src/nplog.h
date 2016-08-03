@@ -13,6 +13,8 @@
 #include <fcntl.h>
 #include <time.h>
 #include <event.h>
+#include <errno.h>
+#include <signal.h>
 #include "epoll.h"
 #include "util.h"
 #include "storage.h"
@@ -27,7 +29,7 @@
 #define HASH_SZIE      64 << 22 // 256*1024*1024
 #define HASH_SIZE_STEP 1 << 22  // 4*1024*1024
 
-static int sockfd = -1;
+static int storage_ret = 0;
 
 typedef enum LOG_LEVEL {
 	DEBUG   = 0x1,
@@ -63,7 +65,7 @@ typedef struct {
 } log_opt;
 
 typedef struct {
-    int sfd;
+    int sock_fd;
     int epoll_fd;
     log_opt *opt;
 } log_server;
@@ -73,4 +75,4 @@ int  log_add(LOG_LEVEL level, char *key_name, char *data); //add && update
 int  log_get(unsigned long key);
 int  log_delete(unsigned long key);
 LOG_LEVEL  get_level(unsigned long key);
-void server_exit(int sig);
+void server_exit(log_server *server);
