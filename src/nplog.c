@@ -62,6 +62,7 @@ typedef struct {
 
 typedef struct {
 	OPT_TYPE opt_type;
+	char *buf;
     log_item *item;
 } log_opt;
 
@@ -92,7 +93,7 @@ show_hlep()
 }
 
 int
-server_do()
+server_do(log_server *server)
 {
 
 }
@@ -205,7 +206,7 @@ main(int argc, char **argv)
 
 	log_init(server, sockfd, epfd);
 
-	ev.data.ptr = (log_server *)server;
+	ev.data.ptr = (void *)server;
 	ev.events = EPOLLIN | EPOLLET;
 	np_epoll_add(epfd, sockfd, &ev);
 
@@ -237,7 +238,7 @@ main(int argc, char **argv)
 					}
 
 					log_init(server, clientfd, epfd);
-					ev.data.ptr = (log_server *)server;
+					ev.data.ptr = (void *)server;
 					ev.events   = EPOLLIN | EPOLLET | EPOLLONESHOT;
 					np_epoll_add(epfd, clientfd, &ev);
 				}

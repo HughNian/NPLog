@@ -25,9 +25,9 @@ typedef int (*lget)(int key_size, log_item *item, storage_info *s_info);
 typedef int (*ldelete)(int key_size, log_item *item, storage_info *s_info);
 
 typedef struct {
-	lput lput;
-	lget lget;
-	ldelete ldelete;
+	lput log_put;
+	lget log_get;
+	ldelete log_delete;
 } storage_handlers;
 
 typedef struct {
